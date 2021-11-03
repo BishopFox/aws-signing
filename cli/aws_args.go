@@ -8,8 +8,9 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/BishopFox/aws-signing/config"
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
+
+	"github.com/BishopFox/aws-signing/config"
 )
 
 type AwsArgs struct {

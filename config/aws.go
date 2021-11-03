@@ -7,9 +7,10 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/BishopFox/aws-signing/signing"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
+	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
+
+	"github.com/BishopFox/aws-signing/signing"
 )
 
 var (
