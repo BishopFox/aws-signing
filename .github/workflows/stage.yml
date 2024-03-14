@@ -11,7 +11,7 @@ on:
 env:
   SERVICE: 'aws-signing'
   ENV_NAME: "stage"
-  GO_VERSION: '1.19'
+  GO_VERSION: 'v1.16.5'
   GO_MOD_DIRECTORY: '.'
   DIFF_PATTERN: '*\.(md|tf|js|py|svg|png)$|VERSION'
   GINKGO_PARAMS: '-r --randomizeAllSpecs --randomizeSuites --failOnPending --cover --trace --race --progress'
