@@ -1,3 +1,7 @@
+## 1.0.2 (Mar 14, 2024)
+
+* Replaced CircleCI with Github Actions
+
 ## 1.0.1 (Mar 07, 2021)
 
 * Fix a bug calculating payload hashes
