@@ -104,9 +104,3 @@ jobs:
           docker tag ${{ env.TAG }} ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.REPO }}:${{ env.TAG }}
           docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.REPO }}:${{ env.TAG }}
         shell: bash
-
-      - name: Persist build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-artifacts
-          path: ${{ env.ARTIFACT_PATHS }}
