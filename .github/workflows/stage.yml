@@ -12,6 +12,7 @@ env:
   SERVICE: 'aws-signing'
   ENV_NAME: "stage"
   GO_VERSION: '1.19'
+  GO_MOD_DIRECTORY: '.'
 
 jobs:
   preflight:
@@ -77,11 +78,33 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      - name: Go Dependencies Check
-        uses: BishopFox/cosmos-actions/go_dependencies_check@main
-        with:
-          engineering-token: ${{ secrets.ENGINEERING_GITHUB_TOKEN }}
-          go-mod-directory: '.'
+      - name: Set up Git credentials for private module access
+        run: |
+          git config --global url."https://${{ secrets.ENGINEERING_GITHUB_TOKEN }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+          echo "GOPRIVATE=github.com/BishopFox/*" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Check Go module dependencies
+        run: |
+          set -o pipefail
+          cd ${{ env.GO_MOD_DIRECTORY }}
+          go mod graph | awk '{print $2}' > dependencies.txt
+          matches=$(grep 'github.com/BishopFox' dependencies.txt | grep -E -v 'v[0-9]+.[0-9]+.[0-9]+$' | grep -v groot || true)
+          if [[ -n "$matches" ]]; then
+            printf "\nfailing build as go.mod references unreleased library versions: \n%s\n" "$matches" >&2
+            exit 1
+          fi
+        shell: bash
+
+      - name: Check for replace statements in go.mod
+        run: |
+          cd ${{ env.GO_MOD_DIRECTORY }}
+          matches=$(grep '^replace' go.mod || true)
+          if [[ -n "$matches" ]]; then
+            printf "\nfailing build as go.mod contains replace statements: \n%s\n" "$matches" >&2
+            exit 1
+          fi
+        shell: bash
 
   ginkgo:
     runs-on: ubuntu-latest
