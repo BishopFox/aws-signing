@@ -19,6 +19,8 @@ env:
   BUILDX: 'false'
   REPO: ''
   ARTIFACT_PATHS: ''
+  AWS_ACCESS_KEY_ID: ''
+  AWS_SECRET_ACCESS_KEY: ''
 
 jobs:
   build-and-push:
@@ -87,8 +89,8 @@ jobs:
           if [ "${{ env.NEEDS_AWS_CREDENTIALS }}" = "true" ]; then
             echo "Using Docker Buildx with AWS credentials"
             docker buildx build --platform ${{ env.PLATFORMS }} -t ${{ env.TAG }} ${{ env.DOCKER_PATH }} --load \
-            --build-arg AWS_ACCESS_KEY_ID=${{ secret.AWS_ACCESS_KEY_ID }} \
-            --build-arg AWS_SECRET_ACCESS_KEY=${{ secret.AWS_SECRET_ACCESS_KEY }} \
+            --build-arg AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }} \
+            --build-arg AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }} \
             --build-arg AWS_REGION=${{ env.AWS_REGION }} \
             --load
           elif [ "${{ env.BUILDX }}" = "true" ]; then
