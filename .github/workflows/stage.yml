@@ -20,11 +20,55 @@ jobs:
       - name: Checkout tools repo
         uses: actions/checkout@v4
 
-      - name: Run Preflight Checks
-        uses: BishopFox/cosmos-actions/preflight@main
-        with:
-          ssh-private-key: ${{ secrets.GH_SSH_KEY }}
-          engineering-token: ${{ secrets.ENGINEERING_GITHUB_TOKEN }}
+      - name: Check PR status
+        run: |
+          PR_DATA=$(curl -H "Authorization: token ${{ secrets.ENGINEERING_GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:${{ github.ref_name }}")
+          PR_COUNT=$(echo "$PR_DATA" | jq '. | length')
+
+          # No PR found
+          if [[ "$PR_COUNT" == "0" ]]; then
+            echo "No PR found. Exiting..."
+            exit 1
+          fi
+
+          # Check if any PR is a draft
+          PR_DRAFT=$(echo "$PR_DATA" | jq '.[] | select(.draft == true)')
+
+          if [[ -n "$PR_DRAFT" ]]; then
+            echo "Associated PR is a draft. Exiting..."
+            exit 1
+          fi
+
+          echo "Associated PR is open and not a draft. Continuing..."
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.ENGINEERING_GITHUB_TOKEN }}
+
+      - name: Fetch all history for all tags and branches
+        run: git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+        shell: bash
+
+      - name: Ensure version number is changed
+        run: |
+          set -o pipefail
+
+          # Reading diff output to array
+          readarray -t diff < <(
+            git diff "origin/${{ github.event.repository.default_branch }}" VERSION
+          )
+
+          # Checking if array length is 0 - VERSION wasn't changed
+          if [[ ${#diff[@]} -eq 0 ]]; then
+            echo "VERSION - matches origin/${{ github.event.repository.default_branch }}, needs bumped"
+            exit 1
+          fi
+        shell: bash
+
+      - name: Ensure changelog matches the version number
+        run: |
+          awk -v "version=$(cat VERSION)" 'NR == 1 && $0 !~ version {print "CHANGELOG.md - version does not match VERSION" | "cat 1>&2"; err=1} END {exit err}' CHANGELOG.md
+        shell: bash
 
   go-dependencies-check:
     runs-on: ubuntu-latest
